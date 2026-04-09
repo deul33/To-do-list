@@ -4,7 +4,147 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>심플 습관 추적기</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* CSS 영역: style.css 내용 */
+        :root {
+            --primary-color: #ff4757;
+            --bg-color: #f1f2f6;
+            --card-bg: #ffffff;
+            --text-dark: #2f3542;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 380px;
+        }
+
+        h1 {
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+            font-size: 1.5rem;
+        }
+
+        .streak-container {
+            margin-bottom: 2rem;
+        }
+
+        #fire-icon {
+            font-size: 60px;
+            display: inline-block;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: grayscale(1);
+            opacity: 0.3;
+        }
+
+        #fire-icon.active {
+            filter: grayscale(0);
+            opacity: 1;
+            transform: scale(1.2);
+            text-shadow: 0 0 20px rgba(255, 71, 87, 0.5);
+        }
+
+        .streak-count {
+            font-size: 1.8rem;
+            font-weight: 800;
+            display: block;
+            margin-top: 5px;
+            color: var(--text-dark);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #edeff2;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        button#add-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        button#add-btn:active {
+            transform: scale(0.95);
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        li {
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            padding: 12px 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .habit-text {
+            flex: 1;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .habit-text.completed {
+            text-decoration: line-through;
+            color: #a4b0be;
+        }
+
+        .delete-btn {
+            background: #dfe4ea;
+            border: none;
+            color: #747d8c;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .delete-btn:hover {
+            background: #ff6b81;
+            color: white;
+        }
+    </style>
 </head>
 <body>
 
@@ -24,6 +164,106 @@
     <ul id="habit-list"></ul>
 </div>
 
-<script src="script.js"></script>
+<script>
+    // JS 영역: script.js 내용
+    const input = document.getElementById('habit-input');
+    const addBtn = document.getElementById('add-btn');
+    const list = document.getElementById('habit-list');
+    const countDisplay = document.getElementById('count');
+    const fireIcon = document.getElementById('fire-icon');
+
+    let habits = JSON.parse(localStorage.getItem('habits')) || [];
+    let streak = parseInt(localStorage.getItem('streak')) || 0;
+
+    function init() {
+        renderHabits();
+        updateStreakUI();
+    }
+
+    function addHabit() {
+        const text = input.value.trim();
+        if (text === '') return;
+
+        const newHabit = {
+            id: Date.now(),
+            text: text,
+            completed: false
+        };
+
+        habits.unshift(newHabit); 
+
+        saveData();
+        renderHabits();
+        
+        input.value = '';
+        input.focus();
+    }
+
+    function toggleHabit(id) {
+        habits = habits.map(habit => {
+            if (habit.id === id) {
+                const isBecomingDone = !habit.completed;
+                if (isBecomingDone) {
+                    streak++;
+                } else {
+                    streak = Math.max(0, streak - 1);
+                }
+                return { ...habit, completed: isBecomingDone };
+            }
+            return habit;
+        });
+
+        saveData();
+        renderHabits();
+        updateStreakUI();
+    }
+
+    function deleteHabit(id, event) {
+        event.stopPropagation();
+        habits = habits.filter(habit => habit.id !== id);
+        saveData();
+        renderHabits();
+    }
+
+    function renderHabits() {
+        list.innerHTML = '';
+        habits.forEach(habit => {
+            const li = document.createElement('li');
+            li.onclick = () => toggleHabit(habit.id);
+
+            li.innerHTML = `
+                <span class="habit-text ${habit.completed ? 'completed' : ''}">
+                    ${habit.text}
+                </span>
+                <button class="delete-btn">삭제</button>
+            `;
+
+            li.querySelector('.delete-btn').onclick = (e) => deleteHabit(habit.id, e);
+            list.appendChild(li);
+        });
+    }
+
+    function updateStreakUI() {
+        countDisplay.innerText = streak;
+        if (streak > 0) {
+            fireIcon.classList.add('active');
+        } else {
+            fireIcon.classList.remove('active');
+        }
+    }
+
+    function saveData() {
+        localStorage.setItem('habits', JSON.stringify(habits));
+        localStorage.setItem('streak', streak.toString());
+    }
+
+    addBtn.addEventListener('click', addHabit);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addHabit();
+    });
+
+    init();
+</script>
 </body>
 </html>
+>

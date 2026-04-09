@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>심플 습관 추적기</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>My Today To Do List</h1>
+    
+    <div class="streak-container">
+        <div id="fire-icon">🔥</div>
+        <span class="streak-count"><span id="count">0</span> 개 완료!</span>
+    </div>
+
+    <div class="input-group">
+        <input type="text" id="habit-input" placeholder="새로운 할 일 입력..." maxlength="20">
+        <button id="add-btn">추가</button>
+    </div>
+
+    <ul id="habit-list"></ul>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
